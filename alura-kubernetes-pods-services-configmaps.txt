@@ -379,8 +379,7 @@ spec:
       ports:
         - containerPort: 80
       envFrom:
-        - configMapKeyRef:
+        - configMapRef:
             name: portal-configmap
-
 
   Parar o pod e criar novamento com o comando: kubectl delete pod portal-noticias e depois kubectl apply -f portal-noticias.yml
