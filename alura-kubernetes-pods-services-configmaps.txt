@@ -1,0 +1,386 @@
+Kubernetes: Pods, Services e ConfigMaps
+
+Módulo 3 - Criando e entendendo pods
+
+Aula 3 -  Primeiro pod
+	
+	para criar o primeiro pod utilizar o comando: kubectl run [nome] [imagem]  ex: kubectl run nginx-pod --image=nginx:latest
+	
+	para visualizar os pods criados utilizar o comando: kubectl get pods
+
+	para visualizar a atualização do status de criação do pod em tempo real utilizar o comando: kubect get pods --watch
+
+	para visualizar as informações do pod utilizar o comando: kubectl describe pod [podName]
+
+	para editar as informações de um pod utilizar o comando: kubectl edit pod [podName]
+
+Aula 6 - Criando pods de maneira declarativa
+	
+	criar um arquivo chamado primeiro-pod.yml
+
+	definir as configs:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: primeiro-pod-declarativo
+spec:
+  containers: 
+    - name: nginx-container
+      image: nginx:latest  
+
+
+
+	acesser a pasta e rodar o comando: kubectl apply -f primeiro-pod.yml
+
+Aula 9 - Iniciando o projeto
+
+	deletar o pod nginx com o comando: kubectl delete pod [podName]
+
+	deletar o pod que foi criado através de um arquivo utilizando o comando: kubectl delete -f primeiro.pod.yml
+
+	acessar o terminal do container dentro do pod através do comando: kubectl exec -it [podName] -- bash
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+Módulo 4 - Expondo pods como services
+
+Aula 4 - Criando um Cluster IP
+
+	Criar dois pods diferentes com os respectivos nomes: pod-1 e pod-2. 
+	
+	apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-2
+spec:
+  containers:
+    - name: container-pod-2
+      image: nginx:latest
+      ports:
+        - containerPort: 80
+
+	Atribuir uma label para o pod-2 com o seguinte comando:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-2
+  labels:
+    app: segundo-pod
+spec:
+  containers:
+    - name: container-pod-2
+      image: nginx:latest
+      ports:
+        - containerPort: 80
+
+	Criar o service svc-pod-2 com as seguintes configurações
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-pod-2
+spec:
+  type: ClusterIP
+  selector:
+    app: segundo-pod
+  ports:
+    - port: 80  
+
+	Executar o service com o comando: kubectl apply -f svc-pod-2.yml
+
+	Executar o comando para visualizar os services: kubectl get svc
+
+
+Aula 6 - Criando um Node Port
+
+	Criar uma label para o pod-1
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-1
+  labels:
+    app: primeiro-pod
+spec:
+  containers:
+    - name: container-pod-1
+      image: nginx:latest
+      ports:
+        - containerPort: 80
+
+	Criar um novo serviço para o pod-1 chamado svc-pod-1.yml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-pod-1
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      #targetPort: 80
+      nodePort: 30000
+  selector:
+    app: primeiro-pod    
+
+Aula 8 - Criando um Load Balancer
+
+  Criar um arquivo de LoadBalancer para o pod-1
+
+  apiVersion: v1
+kind: Service
+metadata:
+  name: svc-pod-1-lb
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      nodePort: 31000
+  selector:
+    app: primeiro-pod
+
+----------------------------------------------------------------------------------------------------
+
+Módulo 5 - Aplicando services ao projeto
+
+Aula 2 - Acessando o portal
+
+  Criando a label para o portal de noticia
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: portal-noticias
+  labels:
+    app: portal-noticias
+spec:
+  containers:
+    - name: portal-noticias-container
+      image: aluracursos/portal-noticias:1  
+      ports:
+        - containerPort: 80
+
+    Criando o service para o portal de noticias
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-portal-noticias
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      #targetPort: 80
+      nodePort: 30000 # 30000 - 32767
+  selector:
+    app: portal-noticias    
+
+
+Aula 4 - Subindo o Sistema
+
+  Criar pod sistema-noticias.yml
+
+  apiVersion: v1
+kind: Pod
+metadata:
+  name: sistema-noticias
+  labels:
+    app: sistema-noticias
+spec:
+  containers:
+    - name: sisema-noticias-container
+      image: aluracursos/sistema-noticias:1
+      ports:
+        - containerPort: 80    
+
+
+  Criar service svc-sistema-noticias que é um NodePort
+
+  apiVersion: v1
+kind: Service
+metadata:
+  name: svc-sistema-noticias
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      nodePort: 30001
+  selector:
+    app: sistema-noticias    
+
+Aula 6 - Subindo o Banco
+
+  Criando o pod db-noticias.yml
+
+  apiVersion: v1
+kind: Pod
+metadata:
+  name: db-noticias
+  labels:
+    app: db-noticias
+spec:
+  containers:
+    - name: db-noticias-container
+      image: aluracursos/mysql-db:1
+      ports:
+        - containerPort: 3306    
+
+
+  Criando o service svc-db-noticias.yml
+
+  apiVersion: v1
+kind: Service
+metadata:
+  name: svc-db-noticias
+spec:
+  type: ClusterIP
+  ports: 
+    - port: 3306
+  selector:
+    app: db-noticias
+
+---------------------------------------------------------------------------------------
+
+Móudlo 6 - Definindo variaveis de ambiente
+
+Aula 2 - Utilizando variáveis de ambiente
+
+  Criar variaveis de ambiente para o banco de dados
+
+    apiVersion: v1
+kind: Pod
+metadata:
+  name: db-noticias
+  labels:
+    app: db-noticias
+spec:
+  containers:
+    - name: db-noticias-container
+      image: aluracursos/mysql-db:1
+      ports:
+        - containerPort: 3306    
+      env:
+        - name: "MYSQL_ROOT_PASSWORD"
+          value: "q1w2e3r4"
+        - name: "MYSQL_DATABASE"
+          value: "empresa"
+        - name: "MYSQL_PASSWORD"
+          value: "q1w2e3r4"
+
+
+  Remover o antigo pod com o comando: kubectl delete pod db-noticias
+
+  Criar o pod novamente passando o comando: kubectl apply -f db-noticias.yml
+
+
+Aula 4 - Criando um ConfigMap
+
+  Criar o arquivo chamado db-configmap.yml
+
+  apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-configmap
+data:
+  MYSQL_ROOT_PASSWORD: q1w2e3r4
+  MYSQL_DATABASE: empresa
+  MYSQL_PASSWORD: q1w2e3r4
+
+Rodar o comando: kubectl apply -f db-configmap.yml
+
+Rodar o comando para visualizar as configs: kubectl get configmap
+
+Rodar o comando para visualizar informações: kubectl describe configmap db-configmap
+
+
+Aula 6 - APlicando o ConfigMap ao projeto
+
+  Referenciar o arquivo de config map em db-noticias.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db-noticias
+  labels:
+    app: db-noticias
+spec:
+  containers:
+    - name: db-noticias-container
+      image: aluracursos/mysql-db:1
+      ports:
+        - containerPort: 3306
+      envFrom:
+        - configMapRef:
+            name: db-configmap
+
+  Parar o pod e criar novamente com o comando: kubectl delete pod db-noticias e depois kubectl apply -f db-noticias.yml
+
+  Criar o aquivo sistema-configmap.yml para configurar as variaveis do nosso sistema:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sistema-configmap
+data:
+  HOST_DB: 10.111.251.236 # ClusterIP ou DNS
+  USER_DB: root
+  PASS_DB: q1w2e3r4
+  DATABASE_DB: empresa
+
+  Dar apply utilizando o comando: kubectl apply -f sistema-configmap.yml
+
+  Referenciar o config-map no nosso arquivo sistema-noticias.yml
+
+  apiVersion: v1
+kind: Pod
+metadata:
+  name: sistema-noticias
+  labels:
+    app: sistema-noticias
+spec:
+  containers:
+    - name: sisema-noticias-container
+      image: aluracursos/sistema-noticias:1
+      ports:
+        - containerPort: 80   
+      envFrom:
+        - configMapRef:
+            name: sistema-configmap
+
+
+  Parar o pod e criar novamento com o comando: kubectl delete pod sistema-noticias e depois kubectl apply -f sistema-noticias.yml
+
+  Criar o arquivo portal-configmap.yml para colocar as variaveis do portal
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: portal-configmap
+data:
+  IP_SISTEMA: http://localhost:30001
+
+Dar apply no arquivo com o comando: kubectl apply -f portal-configmap.yml
+
+Referenciar as variaveis no arquivo portal-noticias.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: portal-noticias
+  labels:
+    app: portal-noticias
+spec:
+  containers:
+    - name: portal-noticias-container
+      image: aluracursos/portal-noticias:1  
+      ports:
+        - containerPort: 80
+      envFrom:
+        - configMapKeyRef:
+            name: portal-configmap
+
+
+  Parar o pod e criar novamento com o comando: kubectl delete pod portal-noticias e depois kubectl apply -f portal-noticias.yml
